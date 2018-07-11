@@ -98,6 +98,7 @@
         - landing-candidate
         - landing-candidate-branch
         - nose-args
+        - vmtest-add-repos
     builders:
         - curtin-vmtest
     properties:
@@ -108,6 +109,24 @@
             artifacts: 'output/**'
             excludes: 'output/debug.log, **/*img'
 
+- job:
+    name: curtin-vmtest-devel-trunk-amd64-proposed
+    node: metal-amd64
+    triggers:
+        - timed: "H 4 * * 7"
+    parameters:
+        - nose-args
+        - vmtest-add-repos
+    properties:
+      - build-discarder:
+          num-to-keep: 5
+    publishers:
+        - email-server-crew
+        - archive-results
+    builders:
+      - curtin-vmtest:
+          vmtest-add-repos: proposed
+
 - builder:
     name: curtin-vmtest
     builders:
@@ -117,6 +136,9 @@
             export no_proxy=archive.ubuntu.com,security.ubuntu.com,ppa.launchpad.net
             if [ "$(hostname)" = "torkoal" ]; then
                 export TMPDIR=/var/lib/jenkins/tmp/
+            fi
+            if [ -n "${vmtest_add_repos}" ]; then
+                export CURTIN_VMTEST_ADD_REPOS=${vmtest_add_repos}
             fi
             export CURTIN_VMTEST_TAR_DISKS=1
 

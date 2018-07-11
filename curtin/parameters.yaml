@@ -32,6 +32,12 @@
           description: Git branch name for testing
 
 - parameter:
+    name: vmtest-add-repos
+      - string:
+          name: vmtest_add_repos
+          description: value for CURTIN_VMTEST_ADD_REPOS
+
+- parameter:
     name: candidate-revision
     parameters:
       - string:
