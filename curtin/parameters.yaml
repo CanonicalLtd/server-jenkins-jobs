@@ -33,6 +33,7 @@
 
 - parameter:
     name: vmtest-add-repos
+    parameters:
       - string:
           name: vmtest_add_repos
           description: value for CURTIN_VMTEST_ADD_REPOS
