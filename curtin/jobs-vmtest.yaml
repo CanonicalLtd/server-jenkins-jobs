@@ -124,8 +124,7 @@
         - email-server-crew
         - archive-results
     builders:
-      - curtin-vmtest:
-          vmtest-add-repos: proposed
+      - curtin-vmtest
 
 - builder:
     name: curtin-vmtest
