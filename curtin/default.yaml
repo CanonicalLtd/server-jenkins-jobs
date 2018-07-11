@@ -41,10 +41,7 @@
       - curtin-vmtest-proposed-b-trigger
       - curtin-vmtest-proposed-x
       - curtin-vmtest-proposed-x-trigger
-      - curtin-vmtest-weekly-proposed-a
-      - curtin-vmtest-weekly-proposed-b
-      - curtin-vmtest-weekly-proposed-t
-      - curtin-vmtest-weekly-proposed-x
+      - curtin-vmtest-devel-trunk-amd64-proposed
 
 - defaults:
     name: global
