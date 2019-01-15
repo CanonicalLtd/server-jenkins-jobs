@@ -110,6 +110,14 @@
           metric_arguments: "--teams foundations-bugs"
 
 - job:
+    name: metric-foundations-netplan
+    builders:
+      - metric-influxdb:
+          team: "foundations"
+          metric_module: "package"
+          metric_arguments: "netplan --repo https://git.launchpad.net/subiquity --package-name netplan.io"
+
+- job:
     name: metric-foundations-proposed-migration
     builders:
       - metric-influxdb:
