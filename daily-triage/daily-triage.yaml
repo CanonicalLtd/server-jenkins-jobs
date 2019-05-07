@@ -125,7 +125,7 @@
           echo -e "</body>\n</html>" >> mail-body.html
 
 
-          # Generate the full multipart/alternate email message
+          # Generate the full multipart/alternative email message
           mpboundary="multipart-boundary-$(date --utc '+%s%N')"
           cat > mail-smtp <<EOF
           From: server@jenkins.canonical.com
