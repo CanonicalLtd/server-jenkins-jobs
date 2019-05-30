@@ -1,0 +1,50 @@
+# Ubuntu Server QA Jenkins Jobs
+# Copyright (C) 2019 Canonical Ltd.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version..
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+
+
+- project:
+    name: docker-image-size
+    dockertag:
+      - latest
+      - rolling
+      - devel
+    jobs:
+      - docker-image-size-{dockertag}
+
+- job-template:
+    name: docker-image-size-{dockertag}
+    node: metal-amd64
+    wrappers:
+      - timeout:
+           timeout: 15
+           fail: true
+    parameters:
+      - string:
+          name: DOCKERTAG
+          default: '{dockertag}'
+          description: "Ubuntu docker tag to pull."
+      - string:
+          name: MAXSIZE
+          default: !j2: "{{ {'latest': 72, 'rolling': 80, 'devel': 80}[dockertag] }}"
+          description: 'Maximum size of the Docker image'
+    triggers:
+      - timed: '@daily'
+    builders:
+      - shell:
+          !include-raw-escape: 'docker-image-size.sh'
+    publishers:
+      - email-server-crew
