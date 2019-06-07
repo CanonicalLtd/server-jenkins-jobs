@@ -1,3 +1,3 @@
 language: python
-install: "pip install jenkins-job-builder==2.0.2"
+install: "pip install jenkins-job-builder==2.10.1"
 script: ./test-jenkins-jobs
