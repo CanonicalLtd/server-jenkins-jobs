@@ -28,7 +28,7 @@
           retry git clone https://github.com/CanonicalLtd/metrics.git
           cd metrics
           export METRICS_PROMETHEUS=10.25.2.225:9091
-          retry python3 -m metrics.{metric_module}
+          python3 -m metrics.{metric_module}
 
 - builder:
     name: metric-influxdb
@@ -44,7 +44,7 @@
           cd metrics
           retry git clone --depth 1 lp:kpi-metrics-tools
           source kpi-metrics-tools/{team}-kpi-influxdb.txt
-          retry python3 -m metrics.{metric_module} {metric_arguments}
+          python3 -m metrics.{metric_module} {metric_arguments}
 
 - builder:
     name: autopkgtest_queues
@@ -61,7 +61,7 @@
           retry git clone --depth 1 lp:kpi-metrics-tools
           source kpi-metrics-tools/foundations-kpi-influxdb.txt
           export METRICS_PROMETHEUS=10.25.2.225:9091
-          retry python3 -m metrics.foundations_autopkgtest_queue --queues {queue_name}
+          python3 -m metrics.foundations_autopkgtest_queue --queues {queue_name}
 
 - job:
     name: metric-foundations-cloud-images
@@ -87,7 +87,7 @@
           source kpi-metrics-tools/foundations-kpi-influxdb.txt
 
           export https_proxy=http://squid.internal:3128
-          retry python3 -m metrics.docker_hub_images
+          python3 -m metrics.docker_hub_images
 
 - job:
     name: metric-foundations-cloud-image-sizes
