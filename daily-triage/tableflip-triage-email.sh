@@ -19,6 +19,7 @@ command -v ubuntu-bug-triage
 
 # Projects to triage
 projects="cloud-init curtin simplestreams"
+github_projects="cloud-init"
 ndays_new_bugs=90
 
 
@@ -56,6 +57,25 @@ for project in $projects; do
 done
 
 
+for project in $github_projects; do
+    : > "$project-reviews.text"
+
+    # Fetch all pull requests
+    curl "https://api.github.com/repos/canonical/$project/pulls" > pulls.json
+
+    # Reverse order so oldest are displayed first, convert to JSON Lines to
+    # reduce repeated work in next step, filter out assigned PRs
+    jq -r 'reverse | .[] | select(.assignee == null)' pulls.json > relevant_pulls.jsonl
+
+    # Use jq's string interpolation to generate the text and HTML output
+    jq -r '"* PR #\(.number): \"\(.title)\" by @\(.user.login)\n  \(.html_url)"' relevant_pulls.jsonl \
+        > "$project-reviews.text"
+    jq -r '"<li><a href=\"\(.html_url)\">PR #\(.number)</a>: \"\(.title)\" by @\(.user.login)"' relevant_pulls.jsonl \
+        > "$project-reviews.html"
+    rm -f pulls.json relevant_pulls.jsonl
+done
+
+
 # Generate the email subject and <title> for the text/html email
 subject="Daily triage for: $projects [$triager]"
 
@@ -68,6 +88,11 @@ subject="Daily triage for: $projects [$triager]"
     for project in $projects; do
         printf '\n## %s active bugs (%s days) and New bugs (%s days)\n\n' "$project" $ndays $ndays_new_bugs
         cat "$project-bugs.text"
+
+        if [ -e "$project-reviews.text" ]; then
+            printf '\n## %s reviews without an assignee\n\n' "$project"
+            cat "$project-reviews.text"
+        fi
     done
 
     printf '\n## Schedule\n\n'
@@ -101,6 +126,13 @@ subject="Daily triage for: $projects [$triager]"
         echo "<pre>"
         cat "$project-bugs.html"
         echo "</pre>"
+
+        if [ -e "$project-reviews.html" ]; then
+            echo "<h5>$project reviews without an assignee</h5>"
+            echo "<ul>"
+            cat "$project-reviews.html"
+            echo "</ul>"
+        fi
     done
 
     echo "<h5>Schedule</h5>"
