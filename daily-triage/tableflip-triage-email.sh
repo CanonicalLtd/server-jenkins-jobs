@@ -1,15 +1,20 @@
 #!/bin/bash
 #
 # Note: this job relies on the system's ability to send mail via /usr/sbin/sendmail.
+#
+# To run this script without sending mail, set TRIAGE_NO_SENDMAIL non-empty in
+# the environment.
 
 set -eufx -o pipefail
 
 export LC_ALL=C.UTF-8
 
+TRIAGE_NO_SENDMAIL="${TRIAGE_NO_SENDMAIL-""}"
+
 
 # Do we have the required tools?
 command -v ubuntu-bug-triage
-command -v /usr/sbin/sendmail
+[ -z "$TRIAGE_NO_SENDMAIL" ] && command -v /usr/sbin/sendmail
 
 
 # Projects to triage
@@ -147,4 +152,8 @@ subject="Daily triage for: $projects [$triager]"
 
 
 # Send the email.
-/usr/sbin/sendmail -t < mail-smtp
+if [ -z "$TRIAGE_NO_SENDMAIL" ]; then
+    /usr/sbin/sendmail -t < mail-smtp
+else
+    echo "Mail output in mail-smtp"
+fi
