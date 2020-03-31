@@ -168,6 +168,7 @@ subject="Daily triage for: $projects [$triager]"
     cat <<-EOF
 	From: server@jenkins.canonical.com
 	To: $recipients
+	Reply-To: $recipients
 	Subject: $subject
 	MIME-Version: 1.0
 	Content-Type: multipart/alternative; boundary="$mpboundary"
