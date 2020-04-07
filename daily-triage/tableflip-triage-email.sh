@@ -83,7 +83,7 @@ done
 # Retrieve the subiquity crashes
 curl -sS 'https://errors.ubuntu.com/api/1.0/most-common-problems/?format=json&limit=5&package=subiquity&period=day' > subiquity_crashes.json
 jq -r '.objects | .[]' subiquity_crashes.json > subiquity_crashes.jsonl
-jq -r '"* [\(.count)] \(.web_link)\n  Function: \(.function)\n  Seen: \(.first_seen) (\(.first_seen_release)) -> \(.last_seen) (\(.last_seen_release)) "' subiquity_crashes.jsonl > subiquity_crashes.text
+jq -r '"* [\(.count)] \(.web_link)\n  Function: \(.function)\n  Seen: \(.first_seen) (\(.first_seen_release)) -> \(.last_seen) (\(.last_seen_release))"' subiquity_crashes.jsonl > subiquity_crashes.text
 jq -r '"<li>[\(.count)] <a href=\"\(.web_link)\">\(.web_link)</a><br>\n    Function: \(.function)<br>\n    Seen: \(.last_seen) (\(.last_seen_release)), First seen: \(.first_seen) (\(.first_seen_elease))\n</li>"' subiquity_crashes.jsonl > subiquity_crashes.html
 
 
