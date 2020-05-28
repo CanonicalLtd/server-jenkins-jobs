@@ -24,6 +24,7 @@
       - cloud-init-integration-ec2-b
       - cloud-init-integration-ec2-e
       - cloud-init-integration-ec2-f
+      - cloud-init-integration-ec2-g
       - cloud-init-integration-ec2-x
       - cloud-init-integration-ec2-terminate
       - cloud-init-integration-lxd-b

@@ -49,7 +49,7 @@
     name: cloud-init-integration-ec2-e
     node: torkoal
     triggers:
-      - timed: "H 0 * * 5"
+      - timed: "H 0 * * 3"
     publishers:
       - email-server-crew
       - archive-results
@@ -64,7 +64,7 @@
     name: cloud-init-integration-ec2-f
     node: torkoal
     triggers:
-      - timed: "H 0 * * 6"
+      - timed: "H 0 * * 4"
     publishers:
       - email-server-crew
       - archive-results
@@ -74,6 +74,21 @@
     builders:
       - integration-ec2:
           release: focal
+
+- job:
+    name: cloud-init-integration-ec2-g
+    node: torkoal
+    triggers:
+      - timed: "H 0 * * 6"
+    publishers:
+      - email-server-crew
+      - archive-results
+      - trigger:
+          project: cloud-init-integration-ec2-terminate
+          threshold: FAILURE
+    builders:
+      - integration-ec2:
+          release: groovy
 
 - builder:
     name: integration-ec2
