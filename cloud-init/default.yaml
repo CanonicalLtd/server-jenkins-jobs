@@ -40,11 +40,15 @@
       - cloud-init-integration-proposed-e-ec2
       - cloud-init-integration-proposed-e-lxd
       - cloud-init-integration-proposed-e-kvm
+      - cloud-init-integration-proposed-f-ec2
+      - cloud-init-integration-proposed-f-lxd
+      - cloud-init-integration-proposed-f-kvm
       - cloud-init-integration-proposed-x-ec2
       - cloud-init-integration-proposed-x-lxd
       - cloud-init-integration-proposed-x-kvm
       - cloud-init-integration-proposed-trigger-b
       - cloud-init-integration-proposed-trigger-e
+      - cloud-init-integration-proposed-trigger-f
       - cloud-init-integration-proposed-trigger-x
       - cloud-init-lp-build-status
       - cloud-init-style-tip

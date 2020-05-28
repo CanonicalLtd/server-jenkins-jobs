@@ -164,6 +164,57 @@
         - email-server-crew
         - archive-results
 
+- job:
+    name: cloud-init-integration-proposed-f-kvm
+    node: torkoal
+    auth-token: BUILD_ME
+    builders:
+      - proposed-integration:
+          release: focal
+          release-ver: 20.04
+          platform: nocloud-kvm
+    publishers:
+        - email-server-crew
+        - archive-results
+
+- job:
+    name: cloud-init-integration-proposed-f-lxd
+    node: torkoal
+    auth-token: BUILD_ME
+    builders:
+      - proposed-integration:
+          release: focal
+          release-ver: 20.04
+          platform: lxd
+    publishers:
+        - email-server-crew
+        - archive-results
+
+- job:
+    name: cloud-init-integration-proposed-trigger-f
+    node: torkoal
+    publishers: []
+    triggers:
+      - timed: "H 10 * * *"
+    builders:
+      - trigger-proposed-integration:
+          release: eoan
+          triggerwhat: cloud-init-integration-proposed-f-lxd cloud-init-integration-proposed-f-ec2 cloud-init-integration-proposed-f-kvm
+
+
+- job:
+    name: cloud-init-integration-proposed-f-ec2
+    node: torkoal
+    auth-token: BUILD_ME
+    builders:
+      - proposed-integration:
+          release: focal
+          release-ver: 20.04
+          platform: ec2
+    publishers:
+        - email-server-crew
+        - archive-results
+
 - builder:
     name: proposed-integration
     builders:
