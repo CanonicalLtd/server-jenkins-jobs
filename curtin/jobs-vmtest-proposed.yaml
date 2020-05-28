@@ -132,6 +132,20 @@
       - vmtest-proposed:
           release: eoan
 
+- job:
+    name: curtin-vmtest-proposed-f
+    node: torkoal
+    auth-token: BUILD_ME
+    publishers:
+      - email-server-crew
+      - archive-results
+    wrappers:
+      - timestamps
+      - workspace-cleanup
+    builders:
+      - vmtest-proposed:
+          release: focal
+
 - builder:
     name: vmtest-proposed
     builders:
