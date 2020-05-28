@@ -30,10 +30,12 @@
       - cloud-init-integration-lxd-b
       - cloud-init-integration-lxd-e
       - cloud-init-integration-lxd-f
+      - cloud-init-integration-lxd-g
       - cloud-init-integration-lxd-x
       - cloud-init-integration-nocloud-kvm-b
       - cloud-init-integration-nocloud-kvm-e
       - cloud-init-integration-nocloud-kvm-f
+      - cloud-init-integration-nocloud-kvm-g
       - cloud-init-integration-nocloud-kvm-x
       - cloud-init-integration-proposed-b-ec2
       - cloud-init-integration-proposed-b-lxd

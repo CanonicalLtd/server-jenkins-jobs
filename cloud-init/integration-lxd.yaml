@@ -62,9 +62,22 @@
     publishers:
       - email-server-crew
       - archive-results
+      - trigger:
+          project: cloud-init-integration-lxd-g
+          threshold: FAILURE
     builders:
       - integration-lxd:
           release: focal
+
+- job:
+    name: cloud-init-integration-lxd-g
+    node: torkoal
+    publishers:
+      - email-server-crew
+      - archive-results
+    builders:
+      - integration-lxd:
+          release: groovy
 
 - builder:
     name: integration-lxd
