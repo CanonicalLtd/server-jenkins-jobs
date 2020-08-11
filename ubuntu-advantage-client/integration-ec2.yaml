@@ -23,5 +23,6 @@
     builders:
       - shell: |
           sudo rm -Rf *
+          TAG_PREFIX=`date -d yesterday +uaclient-ci-%m%d-*`
           git clone https://github.com/canonical/server-test-scripts
-          ./server-test-scripts/ubuntu-advantage-client/ec2_cleanup.py
+          ./server-test-scripts/ubuntu-advantage-client/ec2_cleanup.py -t $TAG_PREFIX

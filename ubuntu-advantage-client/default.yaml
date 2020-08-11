@@ -23,7 +23,7 @@
 - defaults:
     name: global
     description: |
-      Cloud-init Ubuntu Server QA Jenkins Job
+      Ubuntu Advantage Client Ubuntu Server QA Jenkins Job
 
       *** STOP ***
       Do NOT edit this job through the web
