@@ -26,4 +26,6 @@
       - shell: |
           OLDER_THAN_DATE=`date -d yesterday +%m/%d/%y`
           git clone https://github.com/canonical/server-test-scripts
-          ./server-test-scripts/ubuntu-advantage-client/ec2_cleanup.py -t uaclient-ci-* --older-than $OLDER_THAN_DATE
+          for region in us-east-1 us-east-2; do
+              AWS_DEFAULT_REGION=$region ./server-test-scripts/ubuntu-advantage-client/ec2_cleanup.py -b $OLDER_THAN_DATE;
+          done
