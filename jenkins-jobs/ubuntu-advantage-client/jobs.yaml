@@ -205,7 +205,6 @@
 - job:
     name: uaclient-cleanup-stale-azure-vms
     defaults: ubuntu-advantage-client
-    node: torkoal
     wrappers:
       - workspace-cleanup
       - credentials-binding:
@@ -241,6 +240,32 @@
           python server-test-scripts/ubuntu-advantage-client/azure_cleanup.py --client-id ${UACLIENT_BEHAVE_AZ_CLIENT_ID} \
           --client-secret ${UACLIENT_BEHAVE_AZ_CLIENT_SECRET} --subscription-id ${UACLIENT_BEHAVE_AZ_SUBSCRIPTION_ID} \
             --tenant-id ${UACLIENT_BEHAVE_AZ_TENANT_ID} || true
+
+- job:
+    name: uaclient-cleanup-stale-gcp-vms
+    defaults: ubuntu-advantage-client
+    wrappers:
+      - workspace-cleanup
+      - credentials-binding:
+          - file:
+              credential-id: ua-gce-account
+              variable: GCP_CREDENTIALS_PATH
+    builders:
+      - shell: |
+          set -ex
+
+          git clone https://github.com/canonical/server-test-scripts.git --depth 1
+          git clone https://github.com/canonical/pycloudlib.git --depth 1
+          python3 -m venv gcp-cleanup
+          . gcp-cleanup/bin/activate
+          pip install pip --upgrade
+
+          cd pycloudlib
+          pip install -r requirements.txt
+          cd ..
+
+          https_proxy=http://squid.internal:3128 python server-test-scripts/ubuntu-advantage-client/gcp_cleanup.py \
+          --credentials-path $GCP_CREDENTIALS_PATH --project ubuntu-rickh --region us-west2 --zone a
 
 - job:
     name: uaclient-cleanup-stale-lxd-vms
@@ -447,6 +472,48 @@
           git clone --depth 1 -b "$UABRANCH" "$UAREPO" ua-client
           cd ua-client
           tox -e behave-azuregeneric-$UBUNTURELEASE
+
+- job-template:
+    name: uaclient-gcp-generic
+    defaults: ubuntu-advantage-client
+    project-type: matrix
+    execution-strategy:
+      sequential: true
+    axes:
+      - axis:
+          type: user-defined
+          name: UBUNTURELEASE
+          values: '{obj:ubunturelease}'
+    parameters:
+      - uaclient
+    wrappers:
+      - workspace-cleanup
+      - timeout:
+          timeout: 50
+          fail: true
+      - credentials-binding:
+          - text:
+              credential-id: ua-contract-token
+              variable: UACLIENT_BEHAVE_CONTRACT_TOKEN
+          - file:
+              credential-id: ua-gce-account
+              variable: UACLIENT_BEHAVE_GCP_CREDENTIALS_PATH
+    triggers:
+      - timed: 'H H * * *'
+    publishers:
+      - email-server-crew-qa
+      - trigger:
+          project: uaclient-cleanup-stale-gcp-vms
+          threshold: FAILURE
+    builders:
+      - shell: |
+          #!/bin/bash
+          set -ex
+
+          git clone --depth 1 -b "$UABRANCH" "$UAREPO" ua-client
+          cd ua-client
+          no_proxy=launchpad.net https_proxy=http://squid.internal:3128 UACLIENT_BEHAVE_GCP_PROJECT=ubuntu-rickh \
+          tox -e behave-gcpgeneric-$UBUNTURELEASE
 
 - job-template:
     name: uaclient-aws-pro-{ubunturelease}
