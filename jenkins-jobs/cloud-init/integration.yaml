@@ -1,0 +1,181 @@
+# Ubuntu Server QA Jenkins Jobs
+# Copyright (C) 2021 Canonical Ltd.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version..
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+
+- project:
+    name: cloud-init-integration-pytest
+    platform:
+      - lxd_container
+      - lxd_vm
+      - ec2
+    release:
+      - xenial
+      - bionic
+      - focal
+      - hirsute
+    source:
+      - daily
+      - proposed
+    jobs:
+      - cloud-init-integration-{platform}-{release}-{source}
+      - cloud-init-integration-{release}-proposed-trigger
+
+- job-template:
+    name: cloud-init-integration-{release}-proposed-trigger
+    defaults: cloud-init
+    node: torkoal
+    triggers:
+      - timed: "@daily"
+    wrappers:
+      - workspace-cleanup
+      - timestamps
+      - timeout:
+          timeout: 5
+          fail: true
+    publishers:
+      - email-server-crew-qa
+    builders:
+      - trigger-proposed-integration:
+          release: "{release}"
+          triggerwhat: !j2: |
+            {% for p in platform -%}
+            {{ "cloud-init-integration-" + p + "-" + release + "-proposed "}}
+            {%- endfor %}
+
+
+- job-template:
+    name: cloud-init-integration-{platform}-{release}-{source}
+    defaults: cloud-init
+    node: torkoal
+    wrappers:
+      - workspace-cleanup
+      - timestamps
+      - timeout:
+          timeout: 180
+          fail: true
+    publishers:
+      - cloud-init-archive-integration-logs
+      - email-server-crew-qa
+    builders:
+      - shell:
+          unstable-return: 99
+          command: |
+            #!/bin/bash
+
+            set -eux -o pipefail
+
+            function cleanup {{
+                if [[ -n ${{container:-}} ]]; then
+                    ! lxc info "$container" &>/dev/null || lxc stop "$container"
+                fi
+            }}
+
+            trap cleanup EXIT
+
+            [[ {source} == proposed ]] && proposed=1 || proposed=0
+
+            ## STEP 1: retrieve the .deb package to test ##
+
+            # Integration tests are done against the daily build of cloud-init, or against
+            # the cloud-init package in -proposed. The test suite revision should match the
+            # revision of the package under test, therefore we retrieve the source package
+            # we'll test and use its test suite. This has a slight advantage over git cloning
+            # and checking out the correct git hash/tag: it's simpler and we could in
+            # principle have d/patches fixing the test suite: using this approach they get
+            # applied.
+            #
+            # Dealing with apt repositories is not straightforward, so we just run a minimal
+            # LXD container to retrieve the package. Maybe one day [1] will come to the rescue.
+            #
+            # [1] https://github.com/chrlutz/apt-repos
+
+            if ((proposed)); then
+                repourl="http://archive.ubuntu.com/ubuntu"
+                suite={release}-proposed
+
+                pversion=$(rmadison --suite {release}-proposed cloud-init)
+                if [[ -z $pversion ]]; then
+                    echo "No cloud-init source package found for $suite"
+                    exit 99
+                fi
+            else
+                repourl="http://ppa.launchpad.net/cloud-init-dev/daily/ubuntu"
+                suite={release}
+            fi
+
+            container="cii-{platform}-{release}-{source}-$BUILD_NUMBER-debretrieval"
+            # Underscores are not valid in container names
+            container=$(echo "$container" | tr -d _)
+            lxd_remote=ubuntu-minimal
+            [[ $(distro-info --devel) == {release} ]] && lxd_remote=${{lxd_remote}}-daily
+            lxc launch --quiet "$lxd_remote:{release}" "$container" --ephemeral
+            sleep 1
+            lxc exec "$container" -- cloud-init status --wait
+
+            if ((!proposed)); then
+                # Add the PPA pubkey.
+                kfile="/etc/apt/trusted.gpg.d/cloud-init-daily-ppa.gpg"
+                key="0x1ff0d8535ef7e719e5c81b9c083d06fbe4d304df"
+                keyserver="keyserver.ubuntu.com"
+                keyurl="https://${{keyserver}}/pks/lookup?op=get&search=${{key}}"
+                lxc exec "$container" -- sh -c "curl -sS '$keyurl' | gpg --dearmour --output $kfile"
+            fi
+            lxc exec "$container" -- sh -c "echo deb '$repourl $suite main' > /etc/apt/sources.list.d/cloud-init-integration.list"
+            lxc exec "$container" -- sh -c "echo deb-src '$repourl $suite main' >> /etc/apt/sources.list.d/cloud-init-integration.list"
+
+            # Download cloud-init from the just added source
+            lxc exec "$container" -- apt-get -q update
+            ubuntu_uid=$(lxc exec "$container" -- id --user ubuntu)
+            lxc exec "$container" --user "$ubuntu_uid" -- mkdir /tmp/cloud-init-src
+            lxc exec "$container" --user "$ubuntu_uid" --cwd /tmp/cloud-init-src -- apt-get -q --download-only source "cloud-init/$suite"
+            lxc file pull --recursive "$container/tmp/cloud-init-src" .
+            lxc stop "$container"
+
+            pushd cloud-init-src
+            dpkg-source -x *.dsc
+            ln -s $(realpath cloud-init*/) ../cloud-init
+            popd
+
+            ## STEP 2: run the tests ##
+
+            CLOUD_INIT_PLATFORM={platform}
+            CLOUD_INIT_OS_IMAGE={release}
+
+            if ((proposed)); then
+                CLOUD_INIT_CLOUD_INIT_SOURCE=PROPOSED
+            else
+                CLOUD_INIT_CLOUD_INIT_SOURCE=ppa:cloud-init-dev/daily
+            fi
+
+            CLOUD_INIT_COLLECT_LOGS=ALWAYS
+            CLOUD_INIT_LOCAL_LOG_PATH="$WORKSPACE/cloud_init_test_logs"
+
+            export CLOUD_INIT_PLATFORM
+            export CLOUD_INIT_CLOUD_INIT_SOURCE
+            export CLOUD_INIT_OS_IMAGE
+            export CLOUD_INIT_COLLECT_LOGS
+            export CLOUD_INIT_LOCAL_LOG_PATH
+
+            cd cloud-init
+            tox -e integration-tests -- -v --showlocals tests/integration_tests
+
+
+- publisher:
+    name: cloud-init-archive-integration-logs
+    publishers:
+      - archive:
+          artifacts: 'cloud_init_test_logs'
+          allow-empty: true
