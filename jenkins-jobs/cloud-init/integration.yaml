@@ -170,7 +170,9 @@
             export CLOUD_INIT_LOCAL_LOG_PATH
 
             cd cloud-init
-            tox -e integration-tests -- -v --showlocals tests/integration_tests
+            # -vv --showlocals to show the full contents of variable in failed
+            # asserts, without ellipsis.
+            tox -e integration-tests -- -vv --showlocals tests/integration_tests
 
 
 - publisher:
