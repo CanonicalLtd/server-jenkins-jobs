@@ -175,22 +175,30 @@
                 steps {
                     deleteDir()
                     git url: 'https://github.com/canonical/server-test-scripts', branch: 'main'
-                    sh 'https_proxy="http://squid.internal:3128" ./git-ubuntu/vm_setup "$VM_NAME" --snapcraft-snap'
+                    sh 'https_proxy="http://squid.internal:3128" ./git-ubuntu/vm_setup "$VM_NAME"'
                 }
             }
 
             stage ('Build') {
                 steps {
                     sh "uvt-kvm ssh --insecure $VM_NAME -- no_proxy=launchpad.net git clone -b ${params.landing_candidate_branch} https://git.launchpad.net/usd-importer git-ubuntu"
-                    sh 'uvt-kvm ssh --insecure "$VM_NAME" -- "cd git-ubuntu; no_proxy=canonical.com,launchpad.net,launchpadlibrarian.net snapcraft"'
+                    sh 'uvt-kvm ssh --insecure "$VM_NAME" -- "cd git-ubuntu; no_proxy=canonical.com,launchpad.net,launchpadlibrarian.net sh snap.sh"'
                     sh 'scp -oStrictHostKeyChecking=no ubuntu@$(uvt-kvm ip "$VM_NAME"):/home/ubuntu/git-ubuntu/git-ubuntu_*_amd64.snap .'
-                    sh 'uvt-kvm ssh --insecure "$VM_NAME" -- "sudo snap install --dangerous --classic git-ubuntu/git-ubuntu_*_amd64.snap"'
-                    sh 'uvt-kvm ssh --insecure "$VM_NAME" -- "snap list"'
+                }
+            }
+
+            stage ('VM Reset') {
+                steps {
+                    sh 'uvt-kvm destroy "$VM_NAME"'
+                    sh 'https_proxy=http://squid.internal:3128 ./git-ubuntu/vm_setup "$VM_NAME"'
                 }
             }
 
             stage ('Unit Tests') {
                 steps {
+                    sh 'scp -oStrictHostKeyChecking=no git-ubuntu_*_amd64.snap ubuntu@$(uvt-kvm ip "$VM_NAME"):/home/ubuntu/'
+                    sh 'uvt-kvm ssh --insecure "$VM_NAME" -- "sudo snap install --dangerous --classic git-ubuntu_*_amd64.snap"'
+                    sh 'uvt-kvm ssh --insecure "$VM_NAME" -- "snap list"'
                     sh 'uvt-kvm ssh --insecure "$VM_NAME" -- "bash -l -c git-ubuntu.self-test"'
                 }
             }
