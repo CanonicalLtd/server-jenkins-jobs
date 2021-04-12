@@ -159,6 +159,9 @@
     dsl: |
       pipeline {
         agent { label 'metal-amd64' }
+        options {
+            timeout(time: 2, unit: 'HOURS')
+        }
         parameters {
             string (
                 defaultValue: 'master',
@@ -168,6 +171,7 @@
 
         environment {
             VM_NAME = "gitubuntu-ci-nightly-${currentBuild.getNumber()}"
+            SNAPCRAFT_LOGIN_FILE = credentials('git-ubuntu-snap-edge-push')
         }
 
         stages {
@@ -200,6 +204,15 @@
                     sh 'uvt-kvm ssh --insecure "$VM_NAME" -- "sudo snap install --dangerous --classic git-ubuntu_*_amd64.snap"'
                     sh 'uvt-kvm ssh --insecure "$VM_NAME" -- "snap list"'
                     sh 'uvt-kvm ssh --insecure "$VM_NAME" -- "bash -l -c git-ubuntu.self-test"'
+                }
+            }
+
+            stage ('Publish') {
+                steps {
+                    sh 'uvt-kvm ssh --insecure "$VM_NAME" -- "no_proxy=canonical.com,launchpad.net,launchpadlibrarian.net sudo snap install --classic snapcraft"'
+                    sh 'scp -oStrictHostKeyChecking=no "$SNAPCRAFT_LOGIN_FILE" ubuntu@$(uvt-kvm ip "$VM_NAME"):git-ubuntu-snap-edge-push'
+                    sh 'uvt-kvm ssh --insecure "$VM_NAME" -- "no_proxy=canonical.com,launchpad.net,snapcraft.io snapcraft login --with git-ubuntu-snap-edge-push"'
+                    sh 'uvt-kvm ssh --insecure "$VM_NAME" -- "no_proxy=canonical.com,launchpad.net,ubuntu.com,snapcraft.io snapcraft upload --release edge git-ubuntu_*_amd64.snap"'
                 }
             }
 
