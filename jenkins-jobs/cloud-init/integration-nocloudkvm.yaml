@@ -90,9 +90,25 @@
     publishers:
       - email-server-crew-qa
       - cloud-init-archive-results
+      - trigger:
+          project: cloud-init-integration-nocloud-kvm-i
+          threshold: FAILURE
     builders:
       - integration-nocloud-kvm:
           release: hirsute
+
+- job:
+    name: cloud-init-integration-nocloud-kvm-i
+    defaults: cloud-init
+    node: torkoal
+    parameters:
+      - boot-timeout
+    publishers:
+      - email-server-crew-qa
+      - cloud-init-archive-results
+    builders:
+      - integration-nocloud-kvm:
+          release: impish
 
 - builder:
     name: integration-nocloud-kvm

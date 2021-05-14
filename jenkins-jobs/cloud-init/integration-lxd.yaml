@@ -80,9 +80,23 @@
     publishers:
       - email-server-crew-qa
       - cloud-init-archive-results
+      - trigger:
+          project: cloud-init-integration-lxd-i
+          threshold: FAILURE
     builders:
       - integration-lxd:
           release: hirsute
+
+- job:
+    name: cloud-init-integration-lxd-i
+    defaults: cloud-init
+    node: torkoal
+    publishers:
+      - email-server-crew-qa
+      - cloud-init-archive-results
+    builders:
+      - integration-lxd:
+          release: impish
 
 - builder:
     name: integration-lxd

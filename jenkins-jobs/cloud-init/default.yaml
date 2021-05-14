@@ -39,6 +39,7 @@
       - focal
       - groovy
       - hirsute
+      - impish
     platform:
       - ec2
       - lxd
