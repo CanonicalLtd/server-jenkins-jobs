@@ -1,5 +1,5 @@
 # Ubuntu Server QA Jenkins Jobs
-# Copyright (C) 2016 Canonical Ltd.
+# Copyright (C) 2021 Canonical Ltd.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,19 +15,8 @@
 # along with this program; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
-- defaults:
-    name: git-ubuntu
-    description: |
-      Git Ubuntu Server QA Jenkins Job
-
-      *** STOP ***
-      Do NOT edit this job through the web
-      This job is managed by Jenkins Job Builder and stored on Github via the URL below:
-      https://github.com/canonical/server-jenkins-jobs
-      *** STOP ***
-    properties:
-      - build-discarder:
-          num-to-keep: 25
+- publisher:
+    name: email-git-ubuntu-qa
     publishers:
-      - email-server-crew-qa
-      - email-git-ubuntu-qa
+      - email:
+          recipients: robie.basak@canonical.com bryce.harrington@canonical.com
